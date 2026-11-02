@@ -15,8 +15,8 @@ Free, MIT-licensed, one native binary, no network code at all.
 | ![before](docs/before-dashboard.png) | ![after](docs/after-dashboard.png) |
 | ![before](docs/before-editor.png) | ![after](docs/after-editor.png) |
 
-Every image above was produced by safeshot itself (`safeshot-fixtures` renders the "before" screenshots; all
-credentials in them are fake — they contain `FAKE`/`EXAMPLE` or are documented example values).
+Every "after" image above was produced by safeshot itself. All credentials in them are fake: they contain
+`FAKE`/`EXAMPLE` or are documented example values.
 
 `--dry-run` shows what would be hidden, labelled by rule:
 
@@ -115,7 +115,7 @@ Exit status: 0 ok, 1 error, 2 usage error, 3 findings present (with --fail-on-fi
 Report example (values are masked — the report never contains a full secret):
 
 ```
-docs/before-terminal.png: 10 findings -> docs/after-terminal.png
+shot.png: 10 findings -> shot.safeshot.png
   F1   critical anthropic-api-key           sk-ant-…a1F         x=301 y=139 912x40
   F4   critical aws-access-key-id           AKIA…PLE            x=306 y=252 329x43
   F9   high     jwt                         eyJh…Rt4            x=863 y=520 674x37 (+6 boxes)
@@ -189,10 +189,9 @@ inspectable detection rules you can extend, and redaction styles that never reus
 ## Limitations — always review before you share
 
 - **OCR can miss text.** Tiny, blurry, low-contrast, rotated or heavily stylised text may not be read, and
-  what isn't read can't be redacted. In the synthetic test set, Vision never returned one terminal line —
-  `{"id": 1042, "email": "jane.doe@example.com", …}` rendered in SF Mono 12pt (light), Courier 14pt (light)
-  and SF Mono 11pt @1x (dark) — not even from an isolated crop of that line, so the email in it stays visible
-  in those three variants (3 of 106 planted secrets). The same line in Menlo, Monaco or SF Mono 13 is read and
+  what isn't read can't be redacted. For example, Vision can skip a whole JSON line such as
+  `{"id": 1042, "email": "jane.doe@example.com", …}` in SF Mono 11–12pt or Courier 14pt, even from an
+  isolated crop, so the email in it stays visible; the same line in Menlo, Monaco or SF Mono 13 is read and
   redacted. Use `--dry-run` or `safeshot review` when it matters.
 - Detection is pattern-based. Secrets without a recognisable shape or label (a bare short password, a name,
   an address) aren't found; add custom rules for your own formats. Some false positives are expected.
@@ -206,31 +205,10 @@ inspectable detection rules you can extend, and redaction styles that never reus
 ```sh
 swift build                 # debug
 swift build -c release
-swift test                  # 30 tests: detectors, Luhn, entropy, geometry, rendering, end-to-end
-.build/debug/safeshot-fixtures /tmp/fixtures   # render the synthetic screenshots
 ```
-
-With only the Command Line Tools installed (no Xcode), SwiftPM may not find the swift-testing macro plugin;
-point it there explicitly:
-
-```sh
-swift test -Xswiftc -plugin-path -Xswiftc /Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing
-```
-
-The end-to-end test renders 9 synthetic screenshots (Menlo, SF Mono, Monaco, Courier, SF Pro, Helvetica;
-dark and light; 11–14pt; 1x and 2x; soft-wrapped tokens), runs the full pipeline with each redaction style,
-re-runs OCR on the **output** and asserts that no 8-character window of any planted secret is recoverable and
-that ≥90% of the non-secret text is still readable. Current result:
-
-```
-recall 103/106 = 97.2%, leaks 0, benign text readable 75/77 = 97.4%
-```
-
-(the 3 misses are the unread JSON line described under Limitations).
 
 Layout: `Sources/SafeshotCore` (Detection, OCR, Render, Config, Pipeline, Report), `Sources/safeshot`
-(CLI, clipboard, watch, SwiftUI review window, menu bar), `Sources/SafeshotFixtures` (synthetic screenshot
-renderer), `Tests/SafeshotCoreTests`.
+(CLI, clipboard, watch, SwiftUI review window, menu bar).
 
 ## License
 
